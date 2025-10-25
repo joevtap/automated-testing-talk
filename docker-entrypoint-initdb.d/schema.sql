@@ -5,3 +5,9 @@ CREATE TABLE IF NOT EXISTS wallets (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
+
+INSERT INTO wallets (id, user_id, balance) VALUES
+(1, 1, 10000),
+(2, 2, 5000),
+(3, 3, 7500)
+ON CONFLICT DO NOTHING;
