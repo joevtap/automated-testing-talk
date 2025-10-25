@@ -22,11 +22,10 @@ describe('Wallet', () => {
       expect(() => createWallet(1, -50)).toThrow('Balance cannot be negative')
     })
 
-    it('should throw an error for non-positive owner ID', () => {
+    it.each([0, -10, -999])('should throw an error for non-positive owner ID', (amount: number) => {
       const error = 'Owner ID must be positive'
 
-      expect(() => createWallet(0, 100)).toThrow(error)
-      expect(() => createWallet(-1, 100)).toThrow(error)
+      expect(() => createWallet(amount, 100)).toThrow(error)
     })
   })
 
