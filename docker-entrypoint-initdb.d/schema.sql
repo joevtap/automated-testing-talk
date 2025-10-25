@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS wallets (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    balance BIGINT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
