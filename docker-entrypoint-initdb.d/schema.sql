@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS wallets (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    owner_id INTEGER NOT NULL,
     balance BIGINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-INSERT INTO wallets (id, user_id, balance) VALUES
+INSERT INTO wallets (id, owner_id, balance) VALUES
 (1, 1, 10000),
 (2, 2, 5000),
 (3, 3, 7500)
