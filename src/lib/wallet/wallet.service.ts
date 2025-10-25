@@ -10,7 +10,7 @@ export class WalletService {
     recipientId: Id,
     amount: number
   ): Promise<[Wallet, Wallet]> {
-    const [newSender, newRecipient] = await this.sql.begin(async (sql) => {
+    return await this.sql.begin(async (sql) => {
       const [senderRow] = await sql`
         SELECT owner_id, balance
         FROM wallets
@@ -47,7 +47,5 @@ export class WalletService {
 
       return [newSender, newRecipient];
     })
-
-    return [newSender, newRecipient];
   }
 }
