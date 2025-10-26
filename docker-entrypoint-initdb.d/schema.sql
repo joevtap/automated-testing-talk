@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS wallets (
 );
 
 INSERT INTO wallets (id, owner_id, balance) VALUES
-(1, 1, 10000),
-(2, 2, 5000),
+(1, 1, 10000000),
+(2, 2, 10000000),
 (3, 3, 7500)
 ON CONFLICT DO NOTHING;
