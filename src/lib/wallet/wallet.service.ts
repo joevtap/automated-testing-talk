@@ -6,46 +6,46 @@ export class WalletService {
   constructor(private sql: postgres.Sql = defaultSql) { }
 
   public async transferFunds(
-    senderId: Id,
-    recipientId: Id,
+    senderWalletId: Id,
+    recipientWalletId: Id,
     amount: number
   ): Promise<[Wallet, Wallet]> {
     return await this.sql.begin(async (sql) => {
-      const [senderRow] = await sql`
-        SELECT owner_id, balance
+      const [senderWalletRow] = await sql`
+        SELECT *
         FROM wallets
-        WHERE owner_id = ${senderId}
+        WHERE id = ${senderWalletId}
         FOR UPDATE
       `
 
-      const [recipientRow] = await sql`
-        SELECT owner_id, balance
+      const [recipientWalletRow] = await sql`
+        SELECT *
         FROM wallets
-        WHERE owner_id = ${recipientId}
+        WHERE id = ${recipientWalletId}
         FOR UPDATE
       `
 
-      if (!senderRow) throw new Error('Sender wallet not found')
-      if (!recipientRow) throw new Error('Recipient wallet not found')
+      if (!senderWalletRow) throw new Error('Sender wallet not found')
+      if (!recipientWalletRow) throw new Error('Recipient wallet not found')
 
-      const sender = new Wallet(senderRow.owner_id, Number(senderRow.balance))
-      const recipient = new Wallet(recipientRow.owner_id, Number(recipientRow.balance))
+      const senderWallet = new Wallet(senderWalletRow.id, senderWalletRow.owner_id, Number(senderWalletRow.balance))
+      const recipientWallet = new Wallet(recipientWalletRow.id, recipientWalletRow.owner_id, Number(recipientWalletRow.balance))
 
-      const [newSender, newRecipient] = sender.transfer(amount, recipient)
+      const [newSenderWallet, newRecipientWallet] = senderWallet.transfer(amount, recipientWallet)
 
       await sql`
         UPDATE wallets
-        SET balance = ${newSender.balance}
-        WHERE owner_id = ${newSender.ownerId}
+        SET balance = ${newSenderWallet.balance}
+        WHERE id = ${newSenderWallet.id}
       `
 
       await sql`
         UPDATE wallets
-        SET balance = ${newRecipient.balance}
-        WHERE owner_id = ${newRecipient.ownerId}
+        SET balance = ${newRecipientWallet.balance}
+        WHERE id = ${newRecipientWallet.id}
       `
 
-      return [newSender, newRecipient];
+      return [newSenderWallet, newRecipientWallet];
     })
   }
 }

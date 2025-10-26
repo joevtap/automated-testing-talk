@@ -54,46 +54,46 @@ describe('WalletService Integration Tests', () => {
 
   describe('transferFunds', () => {
     it('should transfer funds between wallets successfully', async () => {
-      const [sender, recipient] = await walletService.transferFunds(1, 2, 3000)
+      const [senderWallet, recipientWallet] = await walletService.transferFunds(1, 2, 3000)
 
-      expect(sender.ownerId).toBe(1)
-      expect(sender.balance).toBe(7000) // 10000 - 3000
-      expect(recipient.ownerId).toBe(2)
-      expect(recipient.balance).toBe(8000) // 5000 + 3000
+      expect(senderWallet.id).toBe(1)
+      expect(senderWallet.balance).toBe(7000) // 10000 - 3000
+      expect(recipientWallet.id).toBe(2)
+      expect(recipientWallet.balance).toBe(8000) // 5000 + 3000
 
-      const [senderRow] = await sql`SELECT owner_id, balance FROM wallets WHERE owner_id = 1`
-      const [recipientRow] = await sql`SELECT owner_id, balance FROM wallets WHERE owner_id = 2`
+      const [senderWalletRow] = await sql`SELECT * FROM wallets WHERE id = 1`
+      const [recipientWalletRow] = await sql`SELECT * FROM wallets WHERE id = 2`
 
-      expect(senderRow.balance).toBe(BigInt(7000))
-      expect(recipientRow.balance).toBe(BigInt(8000))
+      expect(senderWalletRow.balance).toBe(BigInt(7000))
+      expect(recipientWalletRow.balance).toBe(BigInt(8000))
     })
 
     it('should handle full balance transfer', async () => {
-      const [sender, recipient] = await walletService.transferFunds(1, 2, 10000)
+      const [senderWallet, recipientWallet] = await walletService.transferFunds(1, 2, 10000)
 
-      expect(sender.balance).toBe(0)
-      expect(recipient.balance).toBe(15000) // 5000 + 10000
+      expect(senderWallet.balance).toBe(0)
+      expect(recipientWallet.balance).toBe(15000) // 5000 + 10000
 
-      const [senderRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 1`
-      expect(senderRow.balance).toBe(BigInt(0))
+      const [senderWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 1`
+      expect(senderWalletRow.balance).toBe(BigInt(0))
     })
 
-    it('should throw error for non-existent sender', async () => {
+    it('should throw error for non-existent sender wallet', async () => {
       await expect(
         walletService.transferFunds(999, 2, 1000)
       ).rejects.toThrow('Sender wallet not found')
 
-      const [recipientRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 2`
-      expect(recipientRow.balance).toBe(BigInt(5000))
+      const [recipientWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 2`
+      expect(recipientWalletRow.balance).toBe(BigInt(5000))
     })
 
-    it('should throw error for non-existent recipient', async () => {
+    it('should throw error for non-existent recipient wallet', async () => {
       await expect(
         walletService.transferFunds(1, 999, 1000)
       ).rejects.toThrow('Recipient wallet not found')
 
-      const [senderRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 1`
-      expect(senderRow.balance).toBe(BigInt(10000))
+      const [senderWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 1`
+      expect(senderWalletRow.balance).toBe(BigInt(10000))
     })
 
     it('should throw error for insufficient funds', async () => {
@@ -101,11 +101,11 @@ describe('WalletService Integration Tests', () => {
         walletService.transferFunds(1, 2, 15000)
       ).rejects.toThrow('Insufficient funds for transfer')
 
-      const [senderRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 1`
-      const [recipientRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 2`
+      const [senderWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 1`
+      const [recipientWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 2`
 
-      expect(senderRow.balance).toBe(BigInt(10000))
-      expect(recipientRow.balance).toBe(BigInt(5000))
+      expect(senderWalletRow.balance).toBe(BigInt(10000))
+      expect(recipientWalletRow.balance).toBe(BigInt(5000))
     })
 
     it('should throw error for non-positive transfer amount', async () => {
@@ -121,14 +121,14 @@ describe('WalletService Integration Tests', () => {
     it('should maintain atomicity - both wallets updated or neither', async () => {
       await walletService.transferFunds(1, 2, 2500)
 
-      const [senderRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 1`
-      const [recipientRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 2`
+      const [senderWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 1`
+      const [recipientWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 2`
 
-      expect(senderRow.balance).toBe(BigInt(7500))
-      expect(recipientRow.balance).toBe(BigInt(7500))
+      expect(senderWalletRow.balance).toBe(BigInt(7500))
+      expect(recipientWalletRow.balance).toBe(BigInt(7500))
 
       const totalBefore = 10000 + 5000
-      const totalAfter = Number(senderRow.balance) + Number(recipientRow.balance)
+      const totalAfter = Number(senderWalletRow.balance) + Number(recipientWalletRow.balance)
       expect(totalAfter).toBe(totalBefore)
     })
 
@@ -138,8 +138,8 @@ describe('WalletService Integration Tests', () => {
 
       await Promise.all([transfer1, transfer2])
 
-      const [senderRow] = await sql`SELECT balance FROM wallets WHERE owner_id = 1`
-      expect(senderRow.balance).toBe(BigInt(7000)) // 10000 - 1000 - 2000
+      const [senderWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 1`
+      expect(senderWalletRow.balance).toBe(BigInt(7000)) // 10000 - 1000 - 2000
     })
   })
 })

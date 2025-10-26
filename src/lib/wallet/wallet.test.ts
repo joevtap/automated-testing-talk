@@ -1,19 +1,19 @@
 import { expect, describe, it } from 'vitest'
 import { Wallet } from './wallet'
 
-const createWallet = (ownerId = 1, balance = 10000) => new Wallet(ownerId, balance)
+const createWallet = (id = 1, ownerId = 1, balance = 10000) => new Wallet(id, ownerId, balance)
 
 describe('Wallet', () => {
   describe('constructor', () => {
     it('should create a wallet with valid parameters', () => {
-      const wallet = createWallet(1, 10000)
+      const wallet = createWallet(1, 1, 10000)
 
       expect(wallet.ownerId).toBe(1)
       expect(wallet.balance).toBe(10000)
     })
 
     it('should be frozen (immutable)', () => {
-      const wallet = createWallet(1, 10000)
+      const wallet = createWallet(1, 1, 10000)
 
       expect(Object.isFrozen(wallet)).toBe(true)
     })
@@ -23,7 +23,7 @@ describe('Wallet', () => {
       { balance: -1, expected: 'Balance cannot be negative' },
       { balance: -99900, expected: 'Balance cannot be negative' },
     ])('should throw an error for negative balance: $balance cents', ({ balance, expected }) => {
-      expect(() => createWallet(1, balance)).toThrow(expected)
+      expect(() => createWallet(1, 1, balance)).toThrow(expected)
     })
 
     it.each([
@@ -32,7 +32,14 @@ describe('Wallet', () => {
       { ownerId: -10, expected: 'Owner ID must be positive' },
       { ownerId: -999, expected: 'Owner ID must be positive' },
     ])('should throw an error for non-positive owner ID: $ownerId', ({ ownerId, expected }) => {
-      expect(() => createWallet(ownerId, 10000)).toThrow(expected)
+      expect(() => createWallet(1, ownerId, 10000)).toThrow(expected)
+    })
+
+    it.each([
+      { id: 0, expected: 'Owner ID must be positive' },
+      { id: -1, expected: 'Owner ID must be positive' },
+    ])('should throw an error for non-positive ID: $id', ({ id, expected }) => {
+      expect(() => createWallet(1, id, 10000)).toThrow(expected)
     })
   })
 
@@ -43,7 +50,7 @@ describe('Wallet', () => {
       { initial: 5050, amount: 2525, expected: 7575 }, // $50.50 + $25.25 = $75.75
       { initial: 100000, amount: 1, expected: 100001 }, // $1000 + $0.01 = $1000.01
     ])('should deposit $amount cents to balance $initial cents correctly', ({ initial, amount, expected }) => {
-      const wallet = createWallet(1, initial)
+      const wallet = createWallet(1, 1, initial)
       const newWallet = wallet.deposit(amount)
 
       expect(newWallet.balance).toBe(expected)
@@ -51,7 +58,7 @@ describe('Wallet', () => {
     })
 
     it('should return new wallet instances', () => {
-      const wallet = createWallet(1, 10000)
+      const wallet = createWallet(1, 1, 10000)
       const newWallet = wallet.deposit(5000)
 
       expect(newWallet).not.toBe(wallet)
@@ -62,7 +69,7 @@ describe('Wallet', () => {
       { amount: -2000, expected: 'Deposit amount must be positive' },
       { amount: -1, expected: 'Deposit amount must be positive' },
     ])('should throw an error for non-positive deposit amount: $amount cents', ({ amount, expected }) => {
-      const wallet = createWallet(1, 10000)
+      const wallet = createWallet(1, 1, 10000)
 
       expect(() => wallet.deposit(amount)).toThrow(expected)
     })
@@ -75,7 +82,7 @@ describe('Wallet', () => {
       { initial: 5050, amount: 2525, expected: 2525 }, // $50.50 - $25.25 = $25.25
       { initial: 100000, amount: 1, expected: 99999 }, // $1000 - $0.01 = $999.99
     ])('should withdraw $amount cents from balance $initial cents correctly', ({ initial, amount, expected }) => {
-      const wallet = createWallet(1, initial)
+      const wallet = createWallet(1, 1, initial)
       const newWallet = wallet.withdraw(amount)
 
       expect(newWallet.balance).toBe(expected)
@@ -87,7 +94,7 @@ describe('Wallet', () => {
       { amount: -3000, expected: 'Withdrawal amount must be positive' },
       { amount: -1, expected: 'Withdrawal amount must be positive' },
     ])('should throw an error for non-positive withdrawal amount: $amount cents', ({ amount, expected }) => {
-      const wallet = createWallet(1, 10000)
+      const wallet = createWallet(1, 1, 10000)
 
       expect(() => wallet.withdraw(amount)).toThrow(expected)
     })
@@ -97,7 +104,7 @@ describe('Wallet', () => {
       { balance: 5000, amount: 10000 }, // $50 balance, try to withdraw $100
       { balance: 0, amount: 1 }, // $0 balance, try to withdraw $0.01
     ])('should throw an error for insufficient funds: balance=$balance cents, withdraw=$amount cents', ({ balance, amount }) => {
-      const wallet = createWallet(1, balance)
+      const wallet = createWallet(1, 1, balance)
 
       expect(() => wallet.withdraw(amount)).toThrow('Insufficient funds')
     })
@@ -110,8 +117,8 @@ describe('Wallet', () => {
       { senderBalance: 15050, recipientBalance: 2525, amount: 5025, expectedSender: 10025, expectedRecipient: 7550 }, // $150.50, $25.25, transfer $50.25
     ])('should transfer $amount cents from sender($senderBalance) to recipient($recipientBalance)',
       ({ senderBalance, recipientBalance, amount, expectedSender, expectedRecipient }) => {
-        const sender = createWallet(1, senderBalance)
-        const recipient = createWallet(2, recipientBalance)
+        const sender = createWallet(1, 1, senderBalance)
+        const recipient = createWallet(2, 2, recipientBalance)
         const [newSender, newRecipient] = sender.transfer(amount, recipient)
 
         expect(newSender.balance).toBe(expectedSender)
@@ -125,8 +132,8 @@ describe('Wallet', () => {
       { amount: -5000, expected: 'Transfer amount must be positive' },
       { amount: -1, expected: 'Transfer amount must be positive' },
     ])('should throw an error for non-positive transfer amount: $amount cents', ({ amount, expected }) => {
-      const sender = createWallet(1, 20000)
-      const recipient = createWallet(2, 5000)
+      const sender = createWallet(1, 1, 20000)
+      const recipient = createWallet(2, 2, 5000)
 
       expect(() => sender.transfer(amount, recipient)).toThrow(expected)
     })
@@ -137,8 +144,8 @@ describe('Wallet', () => {
       { balance: 0, amount: 1 }, // $0 balance, try to transfer $0.01
     ])('should throw an error for insufficient funds on transfer: balance=$balance cents, transfer=$amount cents',
       ({ balance, amount }) => {
-        const sender = createWallet(1, balance)
-        const recipient = createWallet(2, 5000)
+        const sender = createWallet(1, 1, balance)
+        const recipient = createWallet(2, 2, 5000)
 
         expect(() => sender.transfer(amount, recipient)).toThrow('Insufficient funds for transfer')
       })
