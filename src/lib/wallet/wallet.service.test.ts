@@ -45,10 +45,12 @@ describe('WalletService Integration Tests', () => {
   beforeEach(async () => {
     await sql`TRUNCATE TABLE wallets RESTART IDENTITY`
     await sql`
-      INSERT INTO wallets (id, owner_id, balance) VALUES
-      (1, 1, 10000),
-      (2, 2, 5000),
-      (3, 3, 7500)
+      INSERT INTO wallets (owner_id, balance) VALUES
+      (1, 10000),
+      (2, 5000),
+      (3, 7500),
+      (1, 2000),
+      (2, 1000)
     `
   })
 
@@ -140,6 +142,20 @@ describe('WalletService Integration Tests', () => {
 
       const [senderWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 1`
       expect(senderWalletRow.balance).toBe(BigInt(7000)) // 10000 - 1000 - 2000
+    })
+
+    it('shouldn\'t update all wallets from the same user in a transfer', async () => {
+      await walletService.transferFunds(1, 2, 1000)
+
+      const [senderWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 1`
+      const [senderAnotherWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 4`
+      const [recipientWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 2`
+      const [recipientAnotherWalletRow] = await sql`SELECT balance FROM wallets WHERE id = 5`
+
+      expect(senderWalletRow.balance).toBe(BigInt(9000))
+      expect(recipientWalletRow.balance).toBe(BigInt(6000))
+      expect(senderAnotherWalletRow.balance).toBe(BigInt(2000)) // Unchanged
+      expect(recipientAnotherWalletRow.balance).toBe(BigInt(1000)) // Unchanged
     })
   })
 })
